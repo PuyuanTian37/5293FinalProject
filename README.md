@@ -1,62 +1,82 @@
-This repo contains a [Quarto book](https://quarto.org/docs/books/) template for the EDAV final project.
+# README
 
-## Follow these instructions carefully
+## Project Title
 
-*If you have any difficulties or have feedback of any kind, please [file an issue](https://github.com/jtr13/quarto-edav-template/issues) or ask questions in the [Discussions](https://github.com/jtr13/quarto-edav-template/discussions) section.*
+**Comparing LIME vs SHAP: Model Interpretability Analysis on the Adult Dataset**
 
-[Video tutorial](https://www.youtube.com/watch?v=emgS2JI4jCk) (walkthrough of steps below)
+## Author
 
-### Copy this template (GitHub)
+Puyuan Tian (pt2654)
 
-- [ ] 1. Click the green "Use this template" button above and choose "Create a new repository". If you don't see the "Use this template" option, **log in to GitHub**. DO NOT FORK THE REPO. Choose a descriptive name for your repo, such as "federalbudget" or "AIDSdeaths". (If you change your topic before you do any work, delete the repo and start over.)
+## Project Overview
 
-- [ ] 2. Leave the setting for viewing the repo as "Public". (Otherwise, we will not be able to access your rendered book.)
+This project analyzes the interpretability of two popular explanation methods, **LIME** (Local Interpretable Model-agnostic Explanations) and **SHAP** (SHapley Additive exPlanations), in the context of both traditional and neural network models trained on the UCI Adult Census Income dataset.
 
-- [ ] 3. In the Description field, write "Source files for final project" then click "Create repository".
+We benchmark these methods in terms of:
 
-### Set up Pages (GitHub)
+-   Accuracy and ROC-AUC performance of models
+-   Explanation stability and consistency
+-   Computation time and scalability
+-   Visualization of both global and local feature importance
 
-- [ ] 1. You've now left the template page and are viewing your new repo on GitHub. On the home page, click Settings. Click the "Pages" section on the left. In the Build and Deployment section, set Source to "Deploy from a branch" (Classic Pages experience) and Branch to main with /docs folder. Click Save.
+## Key Files
 
-- [ ] 2. Click the little gear button near "About" on the top right side of the home page of the repo and check the "Use your Github Pages website" box under "Website". Click "Save changes". Test the link and you should see a web site with a stick figure on it. It may take a few minutes to build so if it's not working do a few more steps and then come back to check.
+| File | Description |
+|----|----|
+| `index.qmd` | Project introduction and motivation |
+| `data.qmd` | Data description, preprocessing steps |
+| `methods.qmd` | Model training and interpretability methodology |
+| `results.qmd` | Evaluation results including metrics, visualizations, and insights |
+| `visualization.qmd` | Additional plots: UMAP, correlation, parallel coordinates |
+| `discussion.qmd` | Reflections, strengths/limits, and takeaways |
+| `_quarto.yml` | Project configuration file for Quarto book |
 
-### Copy the repo link (GitHub)
+## Repository
 
-- [ ] 1. Click the green Code button, choose "HTTPS" and copy the link below. It should have the format: https&#xfeff;://github.com/[USERNAME]/[REPONAME].git
+GitHub URL: <https://github.com/PuyuanTian37/5293FinalProject>
 
-### Clone the repo (RStudio)
+## Setup Instructions
 
-- [ ] 1. Clone your new repo with *File, New Project..., Version Control, Git* in RStudio. You will need to paste the link from the previous step in the Repository URL box. If it's not automatically populated, enter the repo name in the "Project directory name:" box. Choose the location of the project.
+1.  **Install R and RStudio** (or use VS Code with Quarto plugin).
 
-### Edit `_quarto.yml` (RStudio)
+2.  Clone this repo:
 
-Tip: From the file pane in RStudio, open `README.md`, which contains these instructions. You can delete steps as you complete them.
+    ``` bash
+    git clone https://github.com/PuyuanTian37/5293FinalProject.git
+    ```
 
-- [ ] 1. Change the all caps info in the `title:`, `author:` and `repo-url` fields in the YAML (top) section of `_quarto.yml` to your info. (Note: it's very important to maintain the indenting structure in this file precisely as is -- be careful!)
+3.  Install the required R packages:
 
-### Render the book (RStudio)
+    ``` r
+    install.packages(c("tidyverse", "caret", "randomForest", "neuralnet", "nnet", "lime", "iml", "pROC", "ggplot2", "shapr", "GGally", "uwot"))
+    ```
 
-- [ ] 1. If you haven't already, click "Help" "Check for Updates" to make sure you have the latest version of RStudio (and thus have Quarto installed.)
+4.  Render the book:
 
-- [ ] 2. Render the web site locally by clicking the "Build" tap on the right and then "Render Book".
+    ``` bash
+    quarto render
+    ```
 
-- [ ] 3. Use `browseURL("docs/index.html")` to view your book locally (or just open `docs/index.html` in a browser).
+## Dataset
 
-- [ ] 4. If it looks good, commit and push all changed files to GitHub. 
+-   [UCI Adult Census Income Dataset](https://archive.ics.uci.edu/ml/datasets/adult)
+-   Task: Binary classification – predict whether income \>50K
 
-(You will need to repeat steps 2 and 4 every time you wish to update the book on GitHub Pages.)
+## Highlighted Methods
 
-### Update README (GitHub or RStudio)
+-   **Random Forest**: interpretable baseline with intrinsic feature importance.
+-   **Neural Network (1-layer MLP)**: a moderately complex model to test explanation fidelity.
+-   **LIME**: Local perturbation-based explanation.
+-   **SHAP**: Game-theoretic model explanation framework.
 
-- [ ] 1. Delete the content of this **README** and add a short description of your project in its place. If you're working locally, be sure to commit and push the changes to GitHub.
+## License
 
-### Optional
+MIT License.
 
-- [ ] 1. Choose a theme from [https://bootswatch.com/](https://bootswatch.com/) and replace "cosmo" in `_quarto.yml` with your prefered theme.
+## Acknowledgments
 
-### Additional features
+This project was inspired by discussions from interpretable machine learning coursework and guided by the work of Ribeiro et al. (2016) for LIME and Lundberg & Lee (2017) for SHAP.
 
-Please consult the official guide to **quarto** book websites: [https://quarto.org/docs/books/](https://quarto.org/docs/books/)
+------------------------------------------------------------------------
 
-
-
+For questions or suggestions, please contact **Puyuan Tian** or open an issue on the GitHub repo.

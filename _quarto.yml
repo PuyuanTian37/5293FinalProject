@@ -3,29 +3,27 @@ project:
   output-dir: docs
 
 execute:
-  echo: true
+  echo: true           
 
 book:
-  title: "YOUR PROJECT TITLE"
+  title: "Comparing LIME vs SHAP: Model Interpretability Analysis on the Adult Dataset"
   author:
-    - AUTHOR1 (UNI1)
-    - AUTHOR2 (UNI2)
-  repo-url: https://github.com/YOUR_GITHUB_ACCOUNT/REPO_NAME
+    - Puyuan Tian (pt2654)
   date: today
+  repo-url: https://github.com/PuyuanTian37/5293FinalProject  
+  repo-actions: [edit, issue]
   page-footer:
     right: |
-      This book was built with <a href="https://quarto.org/">Quarto</a>.
-  repo-actions: [edit, issue]
+      Built with <a href="https://quarto.org/">Quarto</a>.
   chapters:
     - index.qmd
     - data.qmd
+    - methods.qmd
     - results.qmd
-    - d3graph.qmd
-    - conclusion.qmd
+    - visualization.qmd
+    - discussion.qmd     
 
 format:
   html:
     theme: cosmo
     code-fold: true
-
-

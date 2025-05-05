@@ -1,0 +1,76 @@
+---
+title: "Enhanced Visualizations"
+---
+
+# Enhanced Visualizations for Interpretability
+
+This chapter adds visually rich and engaging plots to help communicate model behavior and interpretability insights.
+
+## 1. Correlation Heatmap
+
+Visualizing correlations between numeric features in the dataset.
+
+```{r}
+library(corrplot)
+library(dplyr)
+train_data <- read.csv("data/adult_train.csv")
+test_data <- read.csv("data/adult_test.csv")
+rf_importance_df <- readRDS("models/rf_importance_df.rds")
+
+top_vars <- rf_importance_df$Feature[1:5]
+
+selected_data <- train_data[, top_vars]
+
+selected_data <- selected_data %>% select(where(is.numeric))
+
+cor_matrix <- cor(selected_data, use = "complete.obs")
+
+corrplot(
+  cor_matrix, method = "color", type = "upper",
+  tl.col = "black", addCoef.col = "black",
+  number.cex = 0.8, title = "Correlation Heatmap of Top Variables",
+  mar = c(0, 0, 2, 0)
+)
+
+
+```
+
+## 2. Parallel Coordinate Plot of Important Features
+
+```{r, message=FALSE, warning=FALSE}
+library(GGally)
+top_rf_features <- rf_importance_df$Feature[1:6]  # top 6 for visibility
+
+parallel_df <- train_data[, c(top_rf_features, "income")]
+
+GGally::ggparcoord(data = parallel_df,
+                   columns = 1:6,
+                   groupColumn = 7,
+                   scale = "std",
+                   showPoints = TRUE,
+                   alphaLines = 0.3) +
+  theme_minimal() +
+  labs(title = "Parallel Coordinate Plot of Top RF Features")
+```
+
+## 3. Dimensionality Reduction (UMAP)
+
+```{r umap-plot, message=FALSE, warning=FALSE}
+library(umap)
+library(RColorBrewer)
+
+umap_model <- umap::umap(select(train_data, -income))
+umap_df <- as.data.frame(umap_model$layout)
+umap_df$income <- train_data$income
+
+# Plot
+ggplot(umap_df, aes(x = V1, y = V2, color = income)) +
+  geom_point(alpha = 0.6) +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "UMAP Projection of Training Data", x = "UMAP1", y = "UMAP2") +
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+These visualizations provide interactive and exploratory perspectives that can complement formal interpretability metrics. They are especially useful when presenting to non-technical audiences or during exploratory analysis.

@@ -1,5 +1,338 @@
-# Data
+---
+title: "Data Processing"
+---
 
-## Description
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
 
-## Missing value analysis
+# Adult Income Dataset
+
+In this chapter, we will explore and process the Adult Income dataset, which will serve as the foundation for our comparison of LIME and SHAP interpretation methods. This dataset is widely used in machine learning research and provides a practical benchmark for classification tasks.
+
+## Dataset Overview
+
+The Adult Income dataset (also known as "Census Income" dataset) was extracted from the 1994 U.S. Census Bureau database. The prediction task is to determine whether a person earns more than \$50,000 a year based on census data.
+
+```{r load-libraries}
+# Loading necessary libraries
+library(tidyverse)  # For data manipulation and visualization
+library(caret)      # For machine learning workflows
+library(scales)     # For better visualization scales
+library(DataExplorer) # For automated EDA
+library(skimr)      # For data summaries
+```
+
+```{r load-data}
+# Loading the Adult dataset
+# We'll use the UCI Machine Learning Repository version
+data_url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
+column_names <- c("age", "workclass", "fnlwgt", "education", 
+                 "education_num", "marital_status", "occupation", 
+                 "relationship", "race", "sex", "capital_gain", 
+                 "capital_loss", "hours_per_week", "native_country", "income")
+
+adult <- read.csv(data_url, header = FALSE, strip.white = TRUE, 
+                 col.names = column_names, na.strings = c("?", "", "NA", "N/A"))
+
+# Display the first few rows
+head(adult)
+```
+
+## Dataset Characteristics
+
+The Adult Income dataset includes the following characteristics:
+
+```{r dataset-info}
+# Dataset dimensions
+cat("Dataset dimensions:", dim(adult)[1], "rows and", dim(adult)[2], "columns\n")
+
+# Class distribution
+income_distribution <- table(adult$income)
+cat("Class distribution:\n")
+print(income_distribution)
+cat("Percentage of high income (>50K):", 
+    percent(income_distribution[2] / sum(income_distribution)), "\n")
+
+# Quick summary of the dataset
+skim(adult)
+```
+
+The dataset contains approximately 32,000 instances with 14 features (predictors) and 1 target variable (income). The class distribution shows an imbalance, with a higher proportion of individuals earning less than \$50,000 per year.
+
+## Feature Analysis
+
+Let's examine the features in more detail:
+
+```{r feature-analysis}
+# Categorical features
+cat_features <- names(adult)[sapply(adult, is.factor) | sapply(adult, is.character)]
+if (length(cat_features) == 0) {
+  # Convert character columns to factors if none are already factors
+  for (col in names(adult)[sapply(adult, is.character)]) {
+    adult[[col]] <- as.factor(adult[[col]])
+  }
+  cat_features <- names(adult)[sapply(adult, is.factor)]
+}
+
+# Numeric features
+num_features <- names(adult)[sapply(adult, is.numeric)]
+
+# Summary of categorical features
+cat("Categorical features:", length(cat_features), "\n")
+print(cat_features)
+
+# Summary of numerical features
+cat("\nNumerical features:", length(num_features), "\n")
+print(num_features)
+
+# Missing values check
+missing_values <- colSums(is.na(adult))
+if (sum(missing_values) > 0) {
+  cat("\nColumns with missing values:\n")
+  print(missing_values[missing_values > 0])
+} else {
+  cat("\nNo missing values found.\n")
+}
+```
+
+## Data Preprocessing
+
+We'll now preprocess the data to make it suitable for our machine learning models:
+
+```{r data-preprocessing}
+# Create a copy of the dataset for preprocessing
+adult_processed <- adult
+
+# Handle missing values
+if (sum(is.na(adult)) > 0) {
+  # For categorical features, replace NA with the most frequent category
+  for (col in cat_features) {
+    if (sum(is.na(adult_processed[[col]])) > 0) {
+      most_frequent <- names(sort(table(adult_processed[[col]]), decreasing = TRUE))[1]
+      adult_processed[[col]][is.na(adult_processed[[col]])] <- most_frequent
+      cat("Replaced NAs in", col, "with", most_frequent, "\n")
+    }
+  }
+  
+  # For numeric features, replace NA with the median
+  for (col in num_features) {
+    if (sum(is.na(adult_processed[[col]])) > 0) {
+      median_val <- median(adult_processed[[col]], na.rm = TRUE)
+      adult_processed[[col]][is.na(adult_processed[[col]])] <- median_val
+      cat("Replaced NAs in", col, "with median:", median_val, "\n")
+    }
+  }
+}
+
+# Convert the target variable to a factor if it's not already
+adult_processed$income <- factor(adult_processed$income, 
+                               levels = c("<=50K", ">50K"), 
+                               labels = c("low", "high"))
+
+# Encode categorical variables
+# We'll use one-hot encoding for our models
+dummy_vars <- dummyVars(~ ., data = select(adult_processed, all_of(cat_features)), fullRank = TRUE)
+categorical_encoded <- predict(dummy_vars, select(adult_processed, all_of(cat_features)))
+saveRDS(dummy_vars, file = "data/dummy_encoder.rds")
+
+# Combine with numeric variables
+adult_encoded <- cbind(select(adult_processed, all_of(num_features)), 
+                     as.data.frame(categorical_encoded),
+                     income = adult_processed$income)
+
+# Check the final preprocessed dataset
+cat("Preprocessed dataset dimensions:", dim(adult_encoded)[1], "rows and", 
+    dim(adult_encoded)[2], "columns\n")
+```
+
+## Feature Importance Visualization
+
+Before we build our models, let's visualize the relationship between features and the target variable:
+
+```{r feature-importance}
+# For numeric features
+if (length(num_features) > 0) {
+  adult_long <- adult_processed %>%
+    select(all_of(c(num_features, "income"))) %>%
+    pivot_longer(cols = all_of(num_features), 
+                names_to = "feature", 
+                values_to = "value")
+  
+  ggplot(adult_long, aes(x = value, fill = income)) +
+    geom_density(alpha = 0.5) +
+    facet_wrap(~ feature, scales = "free") +
+    theme_minimal() +
+    labs(title = "Distribution of Numeric Features by Income Level",
+         x = "Value", y = "Density") +
+    scale_fill_brewer(palette = "Set1")
+}
+
+# For categorical features (selecting a few important ones to avoid overcrowding)
+important_cat_features <- c("education", "marital_status", "occupation", "relationship")
+important_cat_features <- intersect(important_cat_features, cat_features)
+
+if (length(important_cat_features) > 0) {
+  for (feature in important_cat_features) {
+    p <- ggplot(adult_processed, aes_string(x = feature, fill = "income")) +
+      geom_bar(position = "fill") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      labs(title = paste("Income Distribution by", feature),
+           y = "Proportion", x = feature) +
+      scale_fill_brewer(palette = "Set1")
+    print(p)
+  }
+}
+```
+
+## Strict Train-Test Split with CSV Export
+
+To ensure there's no data leakage, we'll implement a strict train-test split strategy and save the datasets as separate CSV files:
+
+```{r train-test-split}
+# Set seed for reproducibility
+random_seed <- 9876
+set.seed(random_seed)
+cat("Random seed used:", random_seed, "\n")
+
+# Perform stratified sampling to maintain class distribution
+train_indices <- createDataPartition(adult_encoded$income, p = 0.7, list = FALSE, 
+                                     times = 1)  # Only create one split
+
+# Create training and testing sets
+train_data <- adult_encoded[train_indices, ]
+test_data <- adult_encoded[-train_indices, ]
+
+# Verify there's no overlap between training and testing sets
+cat("Number of overlapping rows between train and test sets:", 
+    sum(rownames(train_data) %in% rownames(test_data)), 
+    "(should be 0)\n")
+
+# Check class distribution in train and test sets
+cat("Training set class distribution:\n")
+print(table(train_data$income))
+cat("Training set class percentages:\n")
+print(prop.table(table(train_data$income)))
+
+cat("\nTest set class distribution:\n")
+print(table(test_data$income))
+cat("Test set class percentages:\n")
+print(prop.table(table(test_data$income)))
+
+# Verify dimensions of splits
+cat("\nTraining set dimensions:", dim(train_data)[1], "rows and", dim(train_data)[2], "columns\n")
+cat("Testing set dimensions:", dim(test_data)[1], "rows and", dim(test_data)[2], "columns\n")
+
+# Create data directory if it doesn't exist
+if (!dir.exists("data")) {
+  dir.create("data")
+}
+
+# Save training and test sets as CSV files
+write.csv(train_data, file = "data/adult_train.csv", row.names = FALSE)
+write.csv(test_data, file = "data/adult_test.csv", row.names = FALSE)
+
+# Save random seed information for reference
+seed_info <- data.frame(seed = random_seed)
+write.csv(seed_info, file = "data/random_seed.csv", row.names = FALSE)
+
+cat("Training and test sets have been saved as separate CSV files.\n")
+cat("Random seed information has been saved as a CSV file.\n")
+```
+
+## Class Imbalance
+
+The Adult Income dataset exhibits class imbalance, with significantly fewer instances of high income (\>\$50K) compared to low income (≤\$50K). This imbalance can bias machine learning models toward the majority class. Let's visualize this imbalance and create a balanced training set:
+
+```{r class-imbalance}
+# Visualize class imbalance
+ggplot(adult_processed, aes(x = income, fill = income)) +
+  geom_bar() +
+  theme_minimal() +
+  labs(title = "Class Distribution in Adult Income Dataset",
+       x = "Income Level", y = "Count") +
+  scale_fill_brewer(palette = "Set1") +
+  geom_text(stat = 'count', aes(label = paste0(round(..count../nrow(adult_processed)*100, 1), "%")), 
+            vjust = -0.5)
+```
+
+### Creating a Balanced Training Set
+
+For better model performance, especially with neural networks, we'll create a balanced training dataset:
+
+```{r balanced-dataset}
+# Calculate class weights
+class_weights <- table(train_data$income)
+class_weights <- 1 / (class_weights / sum(class_weights))
+class_weights <- class_weights / sum(class_weights) * 2
+names(class_weights) <- levels(train_data$income)
+print(class_weights)
+
+# Create balanced sample
+set.seed(random_seed)  # Use the same random seed
+low_indices <- which(train_data$income == "low")
+high_indices <- which(train_data$income == "high")
+
+# Undersample the majority class
+n_minority <- length(high_indices)
+sampled_low_indices <- sample(low_indices, n_minority)
+
+# Create balanced dataset
+balanced_indices <- c(sampled_low_indices, high_indices)
+balanced_train_data <- train_data[balanced_indices, ]
+
+# Verify class distribution in balanced dataset
+cat("Balanced training set class distribution:\n")
+print(table(balanced_train_data$income))
+
+# Save balanced training set as CSV
+write.csv(balanced_train_data, file = "data/adult_train_balanced.csv", row.names = FALSE)
+cat("Balanced training set has been saved as a CSV file.\n")
+```
+
+## Data Validation
+
+To ensure our data processing pipeline is robust, we'll perform some additional validation checks:
+
+```{r data-validation}
+# Check if the two classes in the balanced training set are equal
+balanced_class_counts <- table(balanced_train_data$income)
+cat("Class counts in balanced training set:", balanced_class_counts[1], "vs", balanced_class_counts[2], "\n")
+cat("Class ratio (low:high):", balanced_class_counts[1]/balanced_class_counts[2], "\n")
+
+# Verify feature column name consistency across all datasets
+cat("\nFeature column name consistency check:\n")
+cat("Training set columns:", ncol(train_data), "\n")
+cat("Testing set columns:", ncol(test_data), "\n")
+cat("Balanced training set columns:", ncol(balanced_train_data), "\n")
+
+# Check for NA values in each dataset
+cat("\nNA values check:\n")
+cat("Total NAs in training set:", sum(is.na(train_data)), "\n")
+cat("Total NAs in test set:", sum(is.na(test_data)), "\n")
+cat("Total NAs in balanced training set:", sum(is.na(balanced_train_data)), "\n")
+
+# Check feature value ranges
+cat("\nNumeric feature range check (train vs test):\n")
+for(feat in num_features) {
+  if(feat %in% colnames(train_data) && feat %in% colnames(test_data)) {
+    cat(feat, "- Train range:", min(train_data[[feat]]), "to", max(train_data[[feat]]),
+        "| Test range:", min(test_data[[feat]]), "to", max(test_data[[feat]]), "\n")
+  }
+}
+```
+
+## Summary
+
+In this chapter, we've:
+
+1.  Loaded and explored the Adult Income dataset
+2.  Identified and analyzed its key features
+3.  Preprocessed the data by handling missing values and encoding categorical variables
+4.  Visualized important relationships between features and income levels
+5.  Implemented a strict train-test split strategy with CSV exports to prevent data leakage
+6.  Created a balanced training dataset to address class imbalance concerns
+7.  Performed additional data validation checks to ensure robust data processing
+
+The preprocessed data is now saved as CSV files, ready for model building and the application of interpretability methods, which we'll explore in the next chapter. This approach ensures clear separation between training and testing data, helping to prevent data leakage issues.

@@ -1,0 +1,279 @@
+---
+title: "Methodology"
+---
+
+# Model Selection and Interpretation Methods
+
+This chapter outlines our approach to comparing LIME and SHAP interpretation methods across different machine learning models. By implementing both traditional machine learning and neural network approaches, we can evaluate how interpretability methods perform across varying algorithmic paradigms and identify their respective strengths and limitations.
+
+## Loading Required Libraries
+
+```{r}
+library(tidyverse)
+library(caret)
+library(randomForest)
+library(nnet)
+library(lime)
+library(iml)
+library(tictoc)
+```
+
+## Data Loading and Preparation
+
+```{r}
+train_data <- read.csv("data/adult_train.csv")
+test_data <- read.csv("data/adult_test.csv")
+balanced_train_data <- read.csv("data/adult_train_balanced.csv")
+
+train_data$income <- factor(train_data$income, levels = c("low", "high"))
+test_data$income <- factor(test_data$income, levels = c("low", "high"))
+balanced_train_data$income <- factor(balanced_train_data$income, levels = c("low", "high"))
+
+# Set target and predictors
+predictor_cols <- setdiff(names(train_data), "income")
+predictor_cols <- predictor_cols[!grepl("income", predictor_cols)]
+
+model_formula <- as.formula(paste("income ~", paste(predictor_cols, collapse = " + ")))
+```
+
+## Model Selection
+
+## Random Forest Model
+
+```{r}
+set.seed(123)
+rf_model <- randomForest(
+  formula = model_formula,
+  data = balanced_train_data,
+  ntree = 100,
+  mtry = sqrt(length(predictor_cols)),
+  maxnodes = 30,
+  importance = TRUE
+)
+
+rf_importance <- importance(rf_model)
+rf_importance_df <- data.frame(
+  Feature = rownames(rf_importance),
+  MeanDecreaseAccuracy = rf_importance[, 3],
+  MeanDecreaseGini = rf_importance[, 4]
+)
+rf_importance_df <- rf_importance_df[order(rf_importance_df$MeanDecreaseAccuracy, decreasing = TRUE), ]
+```
+
+### Multi-Layer Perceptron (Neural Network)
+
+```{r}
+# Standardize numeric features
+preprocess_for_nn <- function(data, numeric_cols) {
+  for (col in numeric_cols) {
+    mean_col <- mean(data[[col]], na.rm = TRUE)
+    sd_col <- sd(data[[col]], na.rm = TRUE)
+    if (sd_col > 0) data[[col]] <- (data[[col]] - mean_col) / sd_col
+  }
+  return(data)
+}
+
+numeric_predictors <- names(train_data)[sapply(train_data, is.numeric)]
+numeric_predictors <- numeric_predictors[numeric_predictors %in% predictor_cols]
+
+balanced_train_nn <- preprocess_for_nn(balanced_train_data, numeric_predictors)
+test_nn <- preprocess_for_nn(test_data, numeric_predictors)
+
+top_features <- head(rf_importance_df$Feature, 20)
+nn_formula <- as.formula(paste("income ~", paste(top_features, collapse = " + ")))
+
+set.seed(123)
+nnet_model <- nnet(
+  formula = nn_formula,
+  data = balanced_train_nn,
+  size = 8,
+  decay = 0.1,
+  maxit = 200,
+  linout = FALSE,
+  trace = FALSE
+)
+
+# Calculate NN importance
+nn_weights <- coef(nnet_model)
+input_nodes <- unique(gsub("->.*", "", names(nn_weights)[grep("^i[0-9]+->h[0-9]+", names(nn_weights))]))
+feature_map <- setNames(top_features, input_nodes)
+nn_importance <- sapply(names(feature_map), function(i) sum(abs(nnet_model$wts[grep(paste0("^", i, "->h"), names(nn_weights))])))
+nn_importance_df <- data.frame(Feature = feature_map, Importance = nn_importance)
+```
+
+## Interpretation Methods
+
+### LIME: Local Interpretable Model-agnostic Explanations
+
+```{r, warning=FALSE}
+library(randomForest)
+library(lime)
+library(nnet)  
+model_type.nnet <- function(x, ...) "classification"
+model_type.randomForest <- function(x, ...) "classification"
+predict_model.randomForest <- function(x, newdata, type, ...) {
+  probs <- randomForest:::predict.randomForest(x, newdata, type = "prob")
+  return(as.data.frame(probs))
+}
+
+model_type.randomForest.formula <- function(x, ...) "classification"
+predict_model.randomForest.formula <- function(x, newdata, type, ...) {
+  probs <- randomForest:::predict.randomForest(x, newdata, type = "prob")
+  return(as.data.frame(probs))
+}
+
+
+predict_model.nnet <- function(x, newdata, type, ...) {
+  prob <- predict(x, newdata, type = "raw")
+  data.frame(low = 1 - prob, high = prob)
+}
+
+rf_explainer <- lime::lime(
+  x = as.data.frame(balanced_train_data[, predictor_cols]),
+  model = rf_model,
+  bin_continuous = TRUE,
+  model_type = "classification",
+  predict_function = function(model, newdata) {
+    probs <- predict(model, newdata, type = "prob")
+    if(!is.data.frame(probs)) probs <- as.data.frame(probs)
+    if(ncol(probs) == 1) {
+      return(data.frame(class_0 = 1-probs[,1], class_1 = probs[,1]))
+    } else {
+      colnames(probs) <- paste0("class_", 1:ncol(probs))
+      return(probs)
+    }
+  }
+)
+
+# Build the LIME explainer for Neural Network
+nn_explainer <- lime::lime(
+  x = as.data.frame(balanced_train_nn[, top_features]),
+  model = nnet_model,
+  bin_continuous = TRUE
+)
+
+# Sample a subset of test data for explanation
+set.seed(456)
+n_explain <- 100
+test_indices <- sample(1:nrow(test_data), n_explain)
+
+# Generate LIME explanations for Random Forest
+lime_explanation <- lime::explain(
+  x = as.data.frame(test_data[test_indices, predictor_cols]),
+  explainer = rf_explainer,
+  n_labels = 1,
+  n_features = 10,       # Show top 10 features
+  n_permutations = 5000  # Number of perturbations to generate
+)
+
+# Generate LIME explanations for Neural Network
+lime_explanation_nn <- lime::explain(
+  x = as.data.frame(test_nn[test_indices, top_features]),
+  explainer = nn_explainer,
+  n_labels = 1,
+  n_features = 10,
+  n_permutations = 5000
+)
+```
+
+## SHAP: SHapley Additive exPlanations
+
+```{r}
+predictor_rf <- iml::Predictor$new(
+  model = rf_model,
+  data = train_data[, predictor_cols],
+  y = train_data$income,
+  type = "prob",
+  class = "high"
+)
+
+set.seed(789)
+sample_instance <- test_data[sample(1:nrow(test_data), 1), predictor_cols]
+shapley_rf <- iml::Shapley$new(
+  predictor = predictor_rf,
+  x.interest = sample_instance,
+  sample.size = 50
+)
+shap_values <- shapley_rf$results
+```
+
+**Time**
+
+```{r, warning=FALSE}
+# Prepare lime explainer for timing
+rf_explainer <- lime::lime(
+  x = as.data.frame(balanced_train_data[, predictor_cols]),
+  model = rf_model,
+  bin_continuous = TRUE
+)
+
+predictor_rf <- iml::Predictor$new(
+  model = rf_model,
+  data = train_data[, predictor_cols],
+  y = train_data$income,
+  type = "prob",
+  class = "high"
+)
+
+tic("LIME (100 observations, RF)")
+invisible(
+  lime::explain(
+    x = as.data.frame(test_data[1:100, predictor_cols]),
+    explainer = rf_explainer,
+    n_labels = 1,
+    n_features = 10,
+    n_permutations = 5000
+  )
+)
+time_lime <- toc(log = TRUE)
+
+tic("Single-observation SHAP (RF)")
+invisible(
+  Shapley$new(predictor_rf, x.interest = test_data[1, predictor_cols])
+)
+time_shap <- toc(log = TRUE)
+
+# Save timing comparison
+if (!dir.exists("models")) dir.create("models")
+timing_comparison <- tibble::tibble(
+  Method = c("LIME (100 observations)", "SHAP (1 observation)"),
+  Seconds = c(time_lime$toc - time_lime$tic, time_shap$toc - time_shap$tic),
+  Observations = c(100, 1),
+  TimePerObservation = c((time_lime$toc - time_lime$tic) / 100, time_shap$toc - time_shap$tic)
+)
+saveRDS(timing_comparison, "models/timing_comparison.rds")
+```
+
+```{r}
+if (!dir.exists("models")) dir.create("models")
+
+saveRDS(rf_model, "models/rf_model.rds")
+saveRDS(nnet_model, "models/nnet_model.rds")
+saveRDS(rf_importance_df, "models/rf_importance_df.rds")
+saveRDS(nn_importance_df, "models/nn_importance_df.rds")
+saveRDS(balanced_train_data, "models/balanced_train_data.rds")
+saveRDS(balanced_train_nn, "models/balanced_train_nn.rds")
+saveRDS(test_data, "models/test_data.rds")
+saveRDS(test_nn, "models/test_nn.rds")
+saveRDS(predictor_cols, "models/predictor_cols.rds")
+saveRDS(top_features, "models/top_features.rds")
+saveRDS(lime_explanation, "models/lime_explanation.rds")
+saveRDS(lime_explanation_nn, "models/lime_explanation_nn.rds")
+saveRDS(shap_values, "models/shap_values.rds")
+saveRDS(shapley_rf, "models/shapley_rf.rds")
+```
+
+## Summary
+
+This chapter has:
+
+1.  **Implemented two distinct machine learning models for income prediction:**
+
+    -   Random Forest as a traditional ensemble method
+    -   Neural Network as a more complex "black box" approach
+
+2.  **Applied two leading interpretation methods:**
+
+    -   LIME for local, approximation-based explanations
+
+    -   SHAP for game-theory-based feature attribution

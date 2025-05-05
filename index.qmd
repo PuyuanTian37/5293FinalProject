@@ -1,1 +1,49 @@
+---
+title: "Project Overview"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
 # Introduction
+
+Machine learning models have become increasingly complex, with many high-performing algorithms functioning as "black boxes" that provide little insight into their decision-making processes. As these models are deployed in critical domains such as healthcare, finance, and criminal justice, the need for transparency and interpretability has emerged as a crucial concern. This research addresses the fundamental challenge of interpreting complex machine learning models by comparing two leading explanation methods: Local Interpretable Model-agnostic Explanations (LIME) and SHapley Additive exPlanations (SHAP).
+
+## Research Background and Significance
+
+Model interpretability refers to the degree to which a human can understand the cause of a decision made by a machine learning model. As algorithms become more complex, this understanding becomes increasingly difficult, creating a tension between model performance and interpretability. This tension is particularly problematic in:
+
+-   **High-stakes decision contexts**: When models influence medical diagnoses, loan approvals, or hiring decisions
+-   **Regulatory environments**: Where explainability may be legally required (e.g., GDPR's "right to explanation")
+-   **Model development**: Where understanding failure modes is crucial for improvement
+
+The significance of this research lies in its contribution to addressing the "black box" problem in machine learning, enabling practitioners to make more informed choices about explanation methods based on empirical evidence rather than theoretical assumptions.
+
+## The Challenge of Black Box Model Explanations
+
+Machine learning models, particularly ensemble methods and deep learning architectures, often sacrifice transparency for performance. This opacity creates several challenges:
+
+1.  **Trust deficit**: Stakeholders may hesitate to adopt models they cannot understand
+2.  **Difficulty in identifying bias**: Hidden patterns of discrimination may go undetected
+3.  **Limited ability to debug**: When models fail, the reasons remain obscure
+4.  **Barriers to knowledge discovery**: Valuable insights within the model remain inaccessible
+
+These challenges have given rise to post-hoc explanation methods such as LIME and SHAP, which attempt to provide interpretations of model decisions after training. However, these methods come with their own limitations and assumptions that warrant careful investigation.
+
+## Core Research Questions
+
+This study will address the following key questions:
+
+1.  How do LIME and SHAP explanations compare when applied to different model types (Random Forest vs. TabNet) on the Adult Income dataset?
+2.  What are the differences in feature importance rankings between these explanation methods?
+3.  How stable and consistent are these explanations across multiple runs and different instances?
+4.  What insights can be gained from analyzing feature interactions identified by these methods?
+
+```{r}
+# This code chunk is for validation only and will not be executed in the final document
+library(lime)
+library(shapr)
+library(randomForest)
+# Checking if packages are installed correctly
+```

@@ -2,22 +2,411 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "YOUR PROJECT TITLE",
+    "title": "Comparing LIME vs SHAP: Model Interpretability Analysis on the Adult Dataset",
     "section": "",
-    "text": "1 Introduction"
+    "text": "1 Introduction\nMachine learning models have become increasingly complex, with many high-performing algorithms functioning as “black boxes” that provide little insight into their decision-making processes. As these models are deployed in critical domains such as healthcare, finance, and criminal justice, the need for transparency and interpretability has emerged as a crucial concern. This research addresses the fundamental challenge of interpreting complex machine learning models by comparing two leading explanation methods: Local Interpretable Model-agnostic Explanations (LIME) and SHapley Additive exPlanations (SHAP).",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Project Overview</span>"
+    ]
   },
   {
-    "objectID": "data.html#description",
-    "href": "data.html#description",
-    "title": "2  Data",
-    "section": "2.1 Description",
-    "text": "2.1 Description"
+    "objectID": "index.html#research-background-and-significance",
+    "href": "index.html#research-background-and-significance",
+    "title": "Comparing LIME vs SHAP: Model Interpretability Analysis on the Adult Dataset",
+    "section": "1.1 Research Background and Significance",
+    "text": "1.1 Research Background and Significance\nModel interpretability refers to the degree to which a human can understand the cause of a decision made by a machine learning model. As algorithms become more complex, this understanding becomes increasingly difficult, creating a tension between model performance and interpretability. This tension is particularly problematic in:\n\nHigh-stakes decision contexts: When models influence medical diagnoses, loan approvals, or hiring decisions\nRegulatory environments: Where explainability may be legally required (e.g., GDPR’s “right to explanation”)\nModel development: Where understanding failure modes is crucial for improvement\n\nThe significance of this research lies in its contribution to addressing the “black box” problem in machine learning, enabling practitioners to make more informed choices about explanation methods based on empirical evidence rather than theoretical assumptions.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Project Overview</span>"
+    ]
   },
   {
-    "objectID": "data.html#missing-value-analysis",
-    "href": "data.html#missing-value-analysis",
-    "title": "2  Data",
-    "section": "2.2 Missing value analysis",
-    "text": "2.2 Missing value analysis"
+    "objectID": "index.html#the-challenge-of-black-box-model-explanations",
+    "href": "index.html#the-challenge-of-black-box-model-explanations",
+    "title": "Comparing LIME vs SHAP: Model Interpretability Analysis on the Adult Dataset",
+    "section": "1.2 The Challenge of Black Box Model Explanations",
+    "text": "1.2 The Challenge of Black Box Model Explanations\nMachine learning models, particularly ensemble methods and deep learning architectures, often sacrifice transparency for performance. This opacity creates several challenges:\n\nTrust deficit: Stakeholders may hesitate to adopt models they cannot understand\nDifficulty in identifying bias: Hidden patterns of discrimination may go undetected\nLimited ability to debug: When models fail, the reasons remain obscure\nBarriers to knowledge discovery: Valuable insights within the model remain inaccessible\n\nThese challenges have given rise to post-hoc explanation methods such as LIME and SHAP, which attempt to provide interpretations of model decisions after training. However, these methods come with their own limitations and assumptions that warrant careful investigation.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Project Overview</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#core-research-questions",
+    "href": "index.html#core-research-questions",
+    "title": "Comparing LIME vs SHAP: Model Interpretability Analysis on the Adult Dataset",
+    "section": "1.3 Core Research Questions",
+    "text": "1.3 Core Research Questions\nThis study will address the following key questions:\n\nHow do LIME and SHAP explanations compare when applied to different model types (Random Forest vs. TabNet) on the Adult Income dataset?\nWhat are the differences in feature importance rankings between these explanation methods?\nHow stable and consistent are these explanations across multiple runs and different instances?\nWhat insights can be gained from analyzing feature interactions identified by these methods?\n\n\n\nCode\n# This code chunk is for validation only and will not be executed in the final document\nlibrary(lime)\nlibrary(shapr)\nlibrary(randomForest)\n# Checking if packages are installed correctly",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Project Overview</span>"
+    ]
+  },
+  {
+    "objectID": "data.html",
+    "href": "data.html",
+    "title": "2  Data Processing",
+    "section": "",
+    "text": "3 Adult Income Dataset\nIn this chapter, we will explore and process the Adult Income dataset, which will serve as the foundation for our comparison of LIME and SHAP interpretation methods. This dataset is widely used in machine learning research and provides a practical benchmark for classification tasks.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#dataset-overview",
+    "href": "data.html#dataset-overview",
+    "title": "2  Data Processing",
+    "section": "3.1 Dataset Overview",
+    "text": "3.1 Dataset Overview\nThe Adult Income dataset (also known as “Census Income” dataset) was extracted from the 1994 U.S. Census Bureau database. The prediction task is to determine whether a person earns more than $50,000 a year based on census data.\n\n\nCode\n# Loading necessary libraries\nlibrary(tidyverse)  # For data manipulation and visualization\nlibrary(caret)      # For machine learning workflows\nlibrary(scales)     # For better visualization scales\nlibrary(DataExplorer) # For automated EDA\nlibrary(skimr)      # For data summaries\n\n\n\n\nCode\n# Loading the Adult dataset\n# We'll use the UCI Machine Learning Repository version\ndata_url &lt;- \"https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data\"\ncolumn_names &lt;- c(\"age\", \"workclass\", \"fnlwgt\", \"education\", \n                 \"education_num\", \"marital_status\", \"occupation\", \n                 \"relationship\", \"race\", \"sex\", \"capital_gain\", \n                 \"capital_loss\", \"hours_per_week\", \"native_country\", \"income\")\n\nadult &lt;- read.csv(data_url, header = FALSE, strip.white = TRUE, \n                 col.names = column_names, na.strings = c(\"?\", \"\", \"NA\", \"N/A\"))\n\n# Display the first few rows\nhead(adult)\n\n\n  age        workclass fnlwgt education education_num     marital_status\n1  39        State-gov  77516 Bachelors            13      Never-married\n2  50 Self-emp-not-inc  83311 Bachelors            13 Married-civ-spouse\n3  38          Private 215646   HS-grad             9           Divorced\n4  53          Private 234721      11th             7 Married-civ-spouse\n5  28          Private 338409 Bachelors            13 Married-civ-spouse\n6  37          Private 284582   Masters            14 Married-civ-spouse\n         occupation  relationship  race    sex capital_gain capital_loss\n1      Adm-clerical Not-in-family White   Male         2174            0\n2   Exec-managerial       Husband White   Male            0            0\n3 Handlers-cleaners Not-in-family White   Male            0            0\n4 Handlers-cleaners       Husband Black   Male            0            0\n5    Prof-specialty          Wife Black Female            0            0\n6   Exec-managerial          Wife White Female            0            0\n  hours_per_week native_country income\n1             40  United-States  &lt;=50K\n2             13  United-States  &lt;=50K\n3             40  United-States  &lt;=50K\n4             40  United-States  &lt;=50K\n5             40           Cuba  &lt;=50K\n6             40  United-States  &lt;=50K",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#dataset-characteristics",
+    "href": "data.html#dataset-characteristics",
+    "title": "2  Data Processing",
+    "section": "3.2 Dataset Characteristics",
+    "text": "3.2 Dataset Characteristics\nThe Adult Income dataset includes the following characteristics:\n\n\nCode\n# Dataset dimensions\ncat(\"Dataset dimensions:\", dim(adult)[1], \"rows and\", dim(adult)[2], \"columns\\n\")\n\n\nDataset dimensions: 32561 rows and 15 columns\n\n\nCode\n# Class distribution\nincome_distribution &lt;- table(adult$income)\ncat(\"Class distribution:\\n\")\n\n\nClass distribution:\n\n\nCode\nprint(income_distribution)\n\n\n\n&lt;=50K  &gt;50K \n24720  7841 \n\n\nCode\ncat(\"Percentage of high income (&gt;50K):\", \n    percent(income_distribution[2] / sum(income_distribution)), \"\\n\")\n\n\nPercentage of high income (&gt;50K): 24% \n\n\nCode\n# Quick summary of the dataset\nskim(adult)\n\n\n\nData summary\n\n\nName\nadult\n\n\nNumber of rows\n32561\n\n\nNumber of columns\n15\n\n\n_______________________\n\n\n\nColumn type frequency:\n\n\n\ncharacter\n9\n\n\nnumeric\n6\n\n\n________________________\n\n\n\nGroup variables\nNone\n\n\n\nVariable type: character\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nmin\nmax\nempty\nn_unique\nwhitespace\n\n\n\n\nworkclass\n1836\n0.94\n7\n16\n0\n8\n0\n\n\neducation\n0\n1.00\n3\n12\n0\n16\n0\n\n\nmarital_status\n0\n1.00\n7\n21\n0\n7\n0\n\n\noccupation\n1843\n0.94\n5\n17\n0\n14\n0\n\n\nrelationship\n0\n1.00\n4\n14\n0\n6\n0\n\n\nrace\n0\n1.00\n5\n18\n0\n5\n0\n\n\nsex\n0\n1.00\n4\n6\n0\n2\n0\n\n\nnative_country\n583\n0.98\n4\n26\n0\n41\n0\n\n\nincome\n0\n1.00\n4\n5\n0\n2\n0\n\n\n\nVariable type: numeric\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\nn_missing\ncomplete_rate\nmean\nsd\np0\np25\np50\np75\np100\nhist\n\n\n\n\nage\n0\n1\n38.58\n13.64\n17\n28\n37\n48\n90\n▇▇▅▂▁\n\n\nfnlwgt\n0\n1\n189778.37\n105549.98\n12285\n117827\n178356\n237051\n1484705\n▇▁▁▁▁\n\n\neducation_num\n0\n1\n10.08\n2.57\n1\n9\n10\n12\n16\n▁▁▇▃▁\n\n\ncapital_gain\n0\n1\n1077.65\n7385.29\n0\n0\n0\n0\n99999\n▇▁▁▁▁\n\n\ncapital_loss\n0\n1\n87.30\n402.96\n0\n0\n0\n0\n4356\n▇▁▁▁▁\n\n\nhours_per_week\n0\n1\n40.44\n12.35\n1\n40\n40\n45\n99\n▁▇▃▁▁\n\n\n\n\n\nThe dataset contains approximately 32,000 instances with 14 features (predictors) and 1 target variable (income). The class distribution shows an imbalance, with a higher proportion of individuals earning less than $50,000 per year.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#feature-analysis",
+    "href": "data.html#feature-analysis",
+    "title": "2  Data Processing",
+    "section": "3.3 Feature Analysis",
+    "text": "3.3 Feature Analysis\nLet’s examine the features in more detail:\n\n\nCode\n# Categorical features\ncat_features &lt;- names(adult)[sapply(adult, is.factor) | sapply(adult, is.character)]\nif (length(cat_features) == 0) {\n  # Convert character columns to factors if none are already factors\n  for (col in names(adult)[sapply(adult, is.character)]) {\n    adult[[col]] &lt;- as.factor(adult[[col]])\n  }\n  cat_features &lt;- names(adult)[sapply(adult, is.factor)]\n}\n\n# Numeric features\nnum_features &lt;- names(adult)[sapply(adult, is.numeric)]\n\n# Summary of categorical features\ncat(\"Categorical features:\", length(cat_features), \"\\n\")\n\n\nCategorical features: 9 \n\n\nCode\nprint(cat_features)\n\n\n[1] \"workclass\"      \"education\"      \"marital_status\" \"occupation\"    \n[5] \"relationship\"   \"race\"           \"sex\"            \"native_country\"\n[9] \"income\"        \n\n\nCode\n# Summary of numerical features\ncat(\"\\nNumerical features:\", length(num_features), \"\\n\")\n\n\n\nNumerical features: 6 \n\n\nCode\nprint(num_features)\n\n\n[1] \"age\"            \"fnlwgt\"         \"education_num\"  \"capital_gain\"  \n[5] \"capital_loss\"   \"hours_per_week\"\n\n\nCode\n# Missing values check\nmissing_values &lt;- colSums(is.na(adult))\nif (sum(missing_values) &gt; 0) {\n  cat(\"\\nColumns with missing values:\\n\")\n  print(missing_values[missing_values &gt; 0])\n} else {\n  cat(\"\\nNo missing values found.\\n\")\n}\n\n\n\nColumns with missing values:\n     workclass     occupation native_country \n          1836           1843            583",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#data-preprocessing",
+    "href": "data.html#data-preprocessing",
+    "title": "2  Data Processing",
+    "section": "3.4 Data Preprocessing",
+    "text": "3.4 Data Preprocessing\nWe’ll now preprocess the data to make it suitable for our machine learning models:\n\n\nCode\n# Create a copy of the dataset for preprocessing\nadult_processed &lt;- adult\n\n# Handle missing values\nif (sum(is.na(adult)) &gt; 0) {\n  # For categorical features, replace NA with the most frequent category\n  for (col in cat_features) {\n    if (sum(is.na(adult_processed[[col]])) &gt; 0) {\n      most_frequent &lt;- names(sort(table(adult_processed[[col]]), decreasing = TRUE))[1]\n      adult_processed[[col]][is.na(adult_processed[[col]])] &lt;- most_frequent\n      cat(\"Replaced NAs in\", col, \"with\", most_frequent, \"\\n\")\n    }\n  }\n  \n  # For numeric features, replace NA with the median\n  for (col in num_features) {\n    if (sum(is.na(adult_processed[[col]])) &gt; 0) {\n      median_val &lt;- median(adult_processed[[col]], na.rm = TRUE)\n      adult_processed[[col]][is.na(adult_processed[[col]])] &lt;- median_val\n      cat(\"Replaced NAs in\", col, \"with median:\", median_val, \"\\n\")\n    }\n  }\n}\n\n\nReplaced NAs in workclass with Private \nReplaced NAs in occupation with Prof-specialty \nReplaced NAs in native_country with United-States \n\n\nCode\n# Convert the target variable to a factor if it's not already\nadult_processed$income &lt;- factor(adult_processed$income, \n                               levels = c(\"&lt;=50K\", \"&gt;50K\"), \n                               labels = c(\"low\", \"high\"))\n\n# Encode categorical variables\n# We'll use one-hot encoding for our models\ndummy_vars &lt;- dummyVars(~ ., data = select(adult_processed, all_of(cat_features)), fullRank = TRUE)\ncategorical_encoded &lt;- predict(dummy_vars, select(adult_processed, all_of(cat_features)))\nsaveRDS(dummy_vars, file = \"data/dummy_encoder.rds\")\n\n# Combine with numeric variables\nadult_encoded &lt;- cbind(select(adult_processed, all_of(num_features)), \n                     as.data.frame(categorical_encoded),\n                     income = adult_processed$income)\n\n# Check the final preprocessed dataset\ncat(\"Preprocessed dataset dimensions:\", dim(adult_encoded)[1], \"rows and\", \n    dim(adult_encoded)[2], \"columns\\n\")\n\n\nPreprocessed dataset dimensions: 32561 rows and 99 columns",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#feature-importance-visualization",
+    "href": "data.html#feature-importance-visualization",
+    "title": "2  Data Processing",
+    "section": "3.5 Feature Importance Visualization",
+    "text": "3.5 Feature Importance Visualization\nBefore we build our models, let’s visualize the relationship between features and the target variable:\n\n\nCode\n# For numeric features\nif (length(num_features) &gt; 0) {\n  adult_long &lt;- adult_processed %&gt;%\n    select(all_of(c(num_features, \"income\"))) %&gt;%\n    pivot_longer(cols = all_of(num_features), \n                names_to = \"feature\", \n                values_to = \"value\")\n  \n  ggplot(adult_long, aes(x = value, fill = income)) +\n    geom_density(alpha = 0.5) +\n    facet_wrap(~ feature, scales = \"free\") +\n    theme_minimal() +\n    labs(title = \"Distribution of Numeric Features by Income Level\",\n         x = \"Value\", y = \"Density\") +\n    scale_fill_brewer(palette = \"Set1\")\n}\n\n\n\n\n\n\n\n\n\nCode\n# For categorical features (selecting a few important ones to avoid overcrowding)\nimportant_cat_features &lt;- c(\"education\", \"marital_status\", \"occupation\", \"relationship\")\nimportant_cat_features &lt;- intersect(important_cat_features, cat_features)\n\nif (length(important_cat_features) &gt; 0) {\n  for (feature in important_cat_features) {\n    p &lt;- ggplot(adult_processed, aes_string(x = feature, fill = \"income\")) +\n      geom_bar(position = \"fill\") +\n      theme_minimal() +\n      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +\n      labs(title = paste(\"Income Distribution by\", feature),\n           y = \"Proportion\", x = feature) +\n      scale_fill_brewer(palette = \"Set1\")\n    print(p)\n  }\n}",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#strict-train-test-split-with-csv-export",
+    "href": "data.html#strict-train-test-split-with-csv-export",
+    "title": "2  Data Processing",
+    "section": "3.6 Strict Train-Test Split with CSV Export",
+    "text": "3.6 Strict Train-Test Split with CSV Export\nTo ensure there’s no data leakage, we’ll implement a strict train-test split strategy and save the datasets as separate CSV files:\n\n\nCode\n# Set seed for reproducibility\nrandom_seed &lt;- 9876\nset.seed(random_seed)\ncat(\"Random seed used:\", random_seed, \"\\n\")\n\n\nRandom seed used: 9876 \n\n\nCode\n# Perform stratified sampling to maintain class distribution\ntrain_indices &lt;- createDataPartition(adult_encoded$income, p = 0.7, list = FALSE, \n                                     times = 1)  # Only create one split\n\n# Create training and testing sets\ntrain_data &lt;- adult_encoded[train_indices, ]\ntest_data &lt;- adult_encoded[-train_indices, ]\n\n# Verify there's no overlap between training and testing sets\ncat(\"Number of overlapping rows between train and test sets:\", \n    sum(rownames(train_data) %in% rownames(test_data)), \n    \"(should be 0)\\n\")\n\n\nNumber of overlapping rows between train and test sets: 0 (should be 0)\n\n\nCode\n# Check class distribution in train and test sets\ncat(\"Training set class distribution:\\n\")\n\n\nTraining set class distribution:\n\n\nCode\nprint(table(train_data$income))\n\n\n\n  low  high \n17304  5489 \n\n\nCode\ncat(\"Training set class percentages:\\n\")\n\n\nTraining set class percentages:\n\n\nCode\nprint(prop.table(table(train_data$income)))\n\n\n\n      low      high \n0.7591805 0.2408195 \n\n\nCode\ncat(\"\\nTest set class distribution:\\n\")\n\n\n\nTest set class distribution:\n\n\nCode\nprint(table(test_data$income))\n\n\n\n low high \n7416 2352 \n\n\nCode\ncat(\"Test set class percentages:\\n\")\n\n\nTest set class percentages:\n\n\nCode\nprint(prop.table(table(test_data$income)))\n\n\n\n      low      high \n0.7592138 0.2407862 \n\n\nCode\n# Verify dimensions of splits\ncat(\"\\nTraining set dimensions:\", dim(train_data)[1], \"rows and\", dim(train_data)[2], \"columns\\n\")\n\n\n\nTraining set dimensions: 22793 rows and 99 columns\n\n\nCode\ncat(\"Testing set dimensions:\", dim(test_data)[1], \"rows and\", dim(test_data)[2], \"columns\\n\")\n\n\nTesting set dimensions: 9768 rows and 99 columns\n\n\nCode\n# Create data directory if it doesn't exist\nif (!dir.exists(\"data\")) {\n  dir.create(\"data\")\n}\n\n# Save training and test sets as CSV files\nwrite.csv(train_data, file = \"data/adult_train.csv\", row.names = FALSE)\nwrite.csv(test_data, file = \"data/adult_test.csv\", row.names = FALSE)\n\n# Save random seed information for reference\nseed_info &lt;- data.frame(seed = random_seed)\nwrite.csv(seed_info, file = \"data/random_seed.csv\", row.names = FALSE)\n\ncat(\"Training and test sets have been saved as separate CSV files.\\n\")\n\n\nTraining and test sets have been saved as separate CSV files.\n\n\nCode\ncat(\"Random seed information has been saved as a CSV file.\\n\")\n\n\nRandom seed information has been saved as a CSV file.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#class-imbalance",
+    "href": "data.html#class-imbalance",
+    "title": "2  Data Processing",
+    "section": "3.7 Class Imbalance",
+    "text": "3.7 Class Imbalance\nThe Adult Income dataset exhibits class imbalance, with significantly fewer instances of high income (&gt;$50K) compared to low income (≤$50K). This imbalance can bias machine learning models toward the majority class. Let’s visualize this imbalance and create a balanced training set:\n\n\nCode\n# Visualize class imbalance\nggplot(adult_processed, aes(x = income, fill = income)) +\n  geom_bar() +\n  theme_minimal() +\n  labs(title = \"Class Distribution in Adult Income Dataset\",\n       x = \"Income Level\", y = \"Count\") +\n  scale_fill_brewer(palette = \"Set1\") +\n  geom_text(stat = 'count', aes(label = paste0(round(..count../nrow(adult_processed)*100, 1), \"%\")), \n            vjust = -0.5)\n\n\n\n\n\n\n\n\n\n\n3.7.1 Creating a Balanced Training Set\nFor better model performance, especially with neural networks, we’ll create a balanced training dataset:\n\n\nCode\n# Calculate class weights\nclass_weights &lt;- table(train_data$income)\nclass_weights &lt;- 1 / (class_weights / sum(class_weights))\nclass_weights &lt;- class_weights / sum(class_weights) * 2\nnames(class_weights) &lt;- levels(train_data$income)\nprint(class_weights)\n\n\n      low      high \n0.4816391 1.5183609 \n\n\nCode\n# Create balanced sample\nset.seed(random_seed)  # Use the same random seed\nlow_indices &lt;- which(train_data$income == \"low\")\nhigh_indices &lt;- which(train_data$income == \"high\")\n\n# Undersample the majority class\nn_minority &lt;- length(high_indices)\nsampled_low_indices &lt;- sample(low_indices, n_minority)\n\n# Create balanced dataset\nbalanced_indices &lt;- c(sampled_low_indices, high_indices)\nbalanced_train_data &lt;- train_data[balanced_indices, ]\n\n# Verify class distribution in balanced dataset\ncat(\"Balanced training set class distribution:\\n\")\n\n\nBalanced training set class distribution:\n\n\nCode\nprint(table(balanced_train_data$income))\n\n\n\n low high \n5489 5489 \n\n\nCode\n# Save balanced training set as CSV\nwrite.csv(balanced_train_data, file = \"data/adult_train_balanced.csv\", row.names = FALSE)\ncat(\"Balanced training set has been saved as a CSV file.\\n\")\n\n\nBalanced training set has been saved as a CSV file.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#data-validation",
+    "href": "data.html#data-validation",
+    "title": "2  Data Processing",
+    "section": "3.8 Data Validation",
+    "text": "3.8 Data Validation\nTo ensure our data processing pipeline is robust, we’ll perform some additional validation checks:\n\n\nCode\n# Check if the two classes in the balanced training set are equal\nbalanced_class_counts &lt;- table(balanced_train_data$income)\ncat(\"Class counts in balanced training set:\", balanced_class_counts[1], \"vs\", balanced_class_counts[2], \"\\n\")\n\n\nClass counts in balanced training set: 5489 vs 5489 \n\n\nCode\ncat(\"Class ratio (low:high):\", balanced_class_counts[1]/balanced_class_counts[2], \"\\n\")\n\n\nClass ratio (low:high): 1 \n\n\nCode\n# Verify feature column name consistency across all datasets\ncat(\"\\nFeature column name consistency check:\\n\")\n\n\n\nFeature column name consistency check:\n\n\nCode\ncat(\"Training set columns:\", ncol(train_data), \"\\n\")\n\n\nTraining set columns: 99 \n\n\nCode\ncat(\"Testing set columns:\", ncol(test_data), \"\\n\")\n\n\nTesting set columns: 99 \n\n\nCode\ncat(\"Balanced training set columns:\", ncol(balanced_train_data), \"\\n\")\n\n\nBalanced training set columns: 99 \n\n\nCode\n# Check for NA values in each dataset\ncat(\"\\nNA values check:\\n\")\n\n\n\nNA values check:\n\n\nCode\ncat(\"Total NAs in training set:\", sum(is.na(train_data)), \"\\n\")\n\n\nTotal NAs in training set: 0 \n\n\nCode\ncat(\"Total NAs in test set:\", sum(is.na(test_data)), \"\\n\")\n\n\nTotal NAs in test set: 0 \n\n\nCode\ncat(\"Total NAs in balanced training set:\", sum(is.na(balanced_train_data)), \"\\n\")\n\n\nTotal NAs in balanced training set: 0 \n\n\nCode\n# Check feature value ranges\ncat(\"\\nNumeric feature range check (train vs test):\\n\")\n\n\n\nNumeric feature range check (train vs test):\n\n\nCode\nfor(feat in num_features) {\n  if(feat %in% colnames(train_data) && feat %in% colnames(test_data)) {\n    cat(feat, \"- Train range:\", min(train_data[[feat]]), \"to\", max(train_data[[feat]]),\n        \"| Test range:\", min(test_data[[feat]]), \"to\", max(test_data[[feat]]), \"\\n\")\n  }\n}\n\n\nage - Train range: 17 to 90 | Test range: 17 to 90 \nfnlwgt - Train range: 12285 to 1455435 | Test range: 18827 to 1484705 \neducation_num - Train range: 1 to 16 | Test range: 1 to 16 \ncapital_gain - Train range: 0 to 99999 | Test range: 0 to 99999 \ncapital_loss - Train range: 0 to 4356 | Test range: 0 to 3900 \nhours_per_week - Train range: 1 to 99 | Test range: 1 to 99",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "data.html#summary",
+    "href": "data.html#summary",
+    "title": "2  Data Processing",
+    "section": "3.9 Summary",
+    "text": "3.9 Summary\nIn this chapter, we’ve:\n\nLoaded and explored the Adult Income dataset\nIdentified and analyzed its key features\nPreprocessed the data by handling missing values and encoding categorical variables\nVisualized important relationships between features and income levels\nImplemented a strict train-test split strategy with CSV exports to prevent data leakage\nCreated a balanced training dataset to address class imbalance concerns\nPerformed additional data validation checks to ensure robust data processing\n\nThe preprocessed data is now saved as CSV files, ready for model building and the application of interpretability methods, which we’ll explore in the next chapter. This approach ensures clear separation between training and testing data, helping to prevent data leakage issues.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Data Processing</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html",
+    "href": "methods.html",
+    "title": "3  Methodology",
+    "section": "",
+    "text": "4 Model Selection and Interpretation Methods\nThis chapter outlines our approach to comparing LIME and SHAP interpretation methods across different machine learning models. By implementing both traditional machine learning and neural network approaches, we can evaluate how interpretability methods perform across varying algorithmic paradigms and identify their respective strengths and limitations.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#loading-required-libraries",
+    "href": "methods.html#loading-required-libraries",
+    "title": "3  Methodology",
+    "section": "4.1 Loading Required Libraries",
+    "text": "4.1 Loading Required Libraries\n\n\nCode\nlibrary(tidyverse)\n\n\nWarning: package 'tidyverse' was built under R version 4.4.3\n\n\nWarning: package 'ggplot2' was built under R version 4.4.3\n\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ ggplot2   3.5.2     ✔ tibble    3.2.1\n✔ lubridate 1.9.4     ✔ tidyr     1.3.1\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\n\nCode\nlibrary(caret)\n\n\nWarning: package 'caret' was built under R version 4.4.3\n\n\nLoading required package: lattice\n\nAttaching package: 'caret'\n\nThe following object is masked from 'package:purrr':\n\n    lift\n\n\nCode\nlibrary(randomForest)\n\n\nWarning: package 'randomForest' was built under R version 4.4.3\n\n\nrandomForest 4.7-1.2\nType rfNews() to see new features/changes/bug fixes.\n\nAttaching package: 'randomForest'\n\nThe following object is masked from 'package:dplyr':\n\n    combine\n\nThe following object is masked from 'package:ggplot2':\n\n    margin\n\n\nCode\nlibrary(nnet)\nlibrary(lime)\n\n\nWarning: package 'lime' was built under R version 4.4.3\n\n\n\nAttaching package: 'lime'\n\nThe following object is masked from 'package:dplyr':\n\n    explain\n\n\nCode\nlibrary(iml)\n\n\nWarning: package 'iml' was built under R version 4.4.3\n\n\nCode\nlibrary(tictoc)\n\n\nWarning: package 'tictoc' was built under R version 4.4.3",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#data-loading-and-preparation",
+    "href": "methods.html#data-loading-and-preparation",
+    "title": "3  Methodology",
+    "section": "4.2 Data Loading and Preparation",
+    "text": "4.2 Data Loading and Preparation\n\n\nCode\ntrain_data &lt;- read.csv(\"data/adult_train.csv\")\ntest_data &lt;- read.csv(\"data/adult_test.csv\")\nbalanced_train_data &lt;- read.csv(\"data/adult_train_balanced.csv\")\n\ntrain_data$income &lt;- factor(train_data$income, levels = c(\"low\", \"high\"))\ntest_data$income &lt;- factor(test_data$income, levels = c(\"low\", \"high\"))\nbalanced_train_data$income &lt;- factor(balanced_train_data$income, levels = c(\"low\", \"high\"))\n\n# Set target and predictors\npredictor_cols &lt;- setdiff(names(train_data), \"income\")\npredictor_cols &lt;- predictor_cols[!grepl(\"income\", predictor_cols)]\n\nmodel_formula &lt;- as.formula(paste(\"income ~\", paste(predictor_cols, collapse = \" + \")))",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#model-selection",
+    "href": "methods.html#model-selection",
+    "title": "3  Methodology",
+    "section": "4.3 Model Selection",
+    "text": "4.3 Model Selection",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#random-forest-model",
+    "href": "methods.html#random-forest-model",
+    "title": "3  Methodology",
+    "section": "4.4 Random Forest Model",
+    "text": "4.4 Random Forest Model\n\n\nCode\nset.seed(123)\nrf_model &lt;- randomForest(\n  formula = model_formula,\n  data = balanced_train_data,\n  ntree = 100,\n  mtry = sqrt(length(predictor_cols)),\n  maxnodes = 30,\n  importance = TRUE\n)\n\nrf_importance &lt;- importance(rf_model)\nrf_importance_df &lt;- data.frame(\n  Feature = rownames(rf_importance),\n  MeanDecreaseAccuracy = rf_importance[, 3],\n  MeanDecreaseGini = rf_importance[, 4]\n)\nrf_importance_df &lt;- rf_importance_df[order(rf_importance_df$MeanDecreaseAccuracy, decreasing = TRUE), ]\n\n\n\n4.4.1 Multi-Layer Perceptron (Neural Network)\n\n\nCode\n# Standardize numeric features\npreprocess_for_nn &lt;- function(data, numeric_cols) {\n  for (col in numeric_cols) {\n    mean_col &lt;- mean(data[[col]], na.rm = TRUE)\n    sd_col &lt;- sd(data[[col]], na.rm = TRUE)\n    if (sd_col &gt; 0) data[[col]] &lt;- (data[[col]] - mean_col) / sd_col\n  }\n  return(data)\n}\n\nnumeric_predictors &lt;- names(train_data)[sapply(train_data, is.numeric)]\nnumeric_predictors &lt;- numeric_predictors[numeric_predictors %in% predictor_cols]\n\nbalanced_train_nn &lt;- preprocess_for_nn(balanced_train_data, numeric_predictors)\ntest_nn &lt;- preprocess_for_nn(test_data, numeric_predictors)\n\ntop_features &lt;- head(rf_importance_df$Feature, 20)\nnn_formula &lt;- as.formula(paste(\"income ~\", paste(top_features, collapse = \" + \")))\n\nset.seed(123)\nnnet_model &lt;- nnet(\n  formula = nn_formula,\n  data = balanced_train_nn,\n  size = 8,\n  decay = 0.1,\n  maxit = 200,\n  linout = FALSE,\n  trace = FALSE\n)\n\n# Calculate NN importance\nnn_weights &lt;- coef(nnet_model)\ninput_nodes &lt;- unique(gsub(\"-&gt;.*\", \"\", names(nn_weights)[grep(\"^i[0-9]+-&gt;h[0-9]+\", names(nn_weights))]))\nfeature_map &lt;- setNames(top_features, input_nodes)\nnn_importance &lt;- sapply(names(feature_map), function(i) sum(abs(nnet_model$wts[grep(paste0(\"^\", i, \"-&gt;h\"), names(nn_weights))])))\nnn_importance_df &lt;- data.frame(Feature = feature_map, Importance = nn_importance)",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#interpretation-methods",
+    "href": "methods.html#interpretation-methods",
+    "title": "3  Methodology",
+    "section": "4.5 Interpretation Methods",
+    "text": "4.5 Interpretation Methods\n\n4.5.1 LIME: Local Interpretable Model-agnostic Explanations\n\n\nCode\nlibrary(randomForest)\nlibrary(lime)\nlibrary(nnet)  \nmodel_type.nnet &lt;- function(x, ...) \"classification\"\nmodel_type.randomForest &lt;- function(x, ...) \"classification\"\npredict_model.randomForest &lt;- function(x, newdata, type, ...) {\n  probs &lt;- randomForest:::predict.randomForest(x, newdata, type = \"prob\")\n  return(as.data.frame(probs))\n}\n\nmodel_type.randomForest.formula &lt;- function(x, ...) \"classification\"\npredict_model.randomForest.formula &lt;- function(x, newdata, type, ...) {\n  probs &lt;- randomForest:::predict.randomForest(x, newdata, type = \"prob\")\n  return(as.data.frame(probs))\n}\n\n\npredict_model.nnet &lt;- function(x, newdata, type, ...) {\n  prob &lt;- predict(x, newdata, type = \"raw\")\n  data.frame(low = 1 - prob, high = prob)\n}\n\nrf_explainer &lt;- lime::lime(\n  x = as.data.frame(balanced_train_data[, predictor_cols]),\n  model = rf_model,\n  bin_continuous = TRUE,\n  model_type = \"classification\",\n  predict_function = function(model, newdata) {\n    probs &lt;- predict(model, newdata, type = \"prob\")\n    if(!is.data.frame(probs)) probs &lt;- as.data.frame(probs)\n    if(ncol(probs) == 1) {\n      return(data.frame(class_0 = 1-probs[,1], class_1 = probs[,1]))\n    } else {\n      colnames(probs) &lt;- paste0(\"class_\", 1:ncol(probs))\n      return(probs)\n    }\n  }\n)\n\n# Build the LIME explainer for Neural Network\nnn_explainer &lt;- lime::lime(\n  x = as.data.frame(balanced_train_nn[, top_features]),\n  model = nnet_model,\n  bin_continuous = TRUE\n)\n\n# Sample a subset of test data for explanation\nset.seed(456)\nn_explain &lt;- 100\ntest_indices &lt;- sample(1:nrow(test_data), n_explain)\n\n# Generate LIME explanations for Random Forest\nlime_explanation &lt;- lime::explain(\n  x = as.data.frame(test_data[test_indices, predictor_cols]),\n  explainer = rf_explainer,\n  n_labels = 1,\n  n_features = 10,       # Show top 10 features\n  n_permutations = 5000  # Number of perturbations to generate\n)\n\n# Generate LIME explanations for Neural Network\nlime_explanation_nn &lt;- lime::explain(\n  x = as.data.frame(test_nn[test_indices, top_features]),\n  explainer = nn_explainer,\n  n_labels = 1,\n  n_features = 10,\n  n_permutations = 5000\n)",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#shap-shapley-additive-explanations",
+    "href": "methods.html#shap-shapley-additive-explanations",
+    "title": "3  Methodology",
+    "section": "4.6 SHAP: SHapley Additive exPlanations",
+    "text": "4.6 SHAP: SHapley Additive exPlanations\n\n\nCode\npredictor_rf &lt;- iml::Predictor$new(\n  model = rf_model,\n  data = train_data[, predictor_cols],\n  y = train_data$income,\n  type = \"prob\",\n  class = \"high\"\n)\n\nset.seed(789)\nsample_instance &lt;- test_data[sample(1:nrow(test_data), 1), predictor_cols]\nshapley_rf &lt;- iml::Shapley$new(\n  predictor = predictor_rf,\n  x.interest = sample_instance,\n  sample.size = 50\n)\nshap_values &lt;- shapley_rf$results\n\n\nTime\n\n\nCode\n# Prepare lime explainer for timing\nrf_explainer &lt;- lime::lime(\n  x = as.data.frame(balanced_train_data[, predictor_cols]),\n  model = rf_model,\n  bin_continuous = TRUE\n)\n\npredictor_rf &lt;- iml::Predictor$new(\n  model = rf_model,\n  data = train_data[, predictor_cols],\n  y = train_data$income,\n  type = \"prob\",\n  class = \"high\"\n)\n\ntic(\"LIME (100 observations, RF)\")\ninvisible(\n  lime::explain(\n    x = as.data.frame(test_data[1:100, predictor_cols]),\n    explainer = rf_explainer,\n    n_labels = 1,\n    n_features = 10,\n    n_permutations = 5000\n  )\n)\ntime_lime &lt;- toc(log = TRUE)\n\n\nLIME (100 observations, RF): 13.85 sec elapsed\n\n\nCode\ntic(\"Single-observation SHAP (RF)\")\ninvisible(\n  Shapley$new(predictor_rf, x.interest = test_data[1, predictor_cols])\n)\ntime_shap &lt;- toc(log = TRUE)\n\n\nSingle-observation SHAP (RF): 4.53 sec elapsed\n\n\nCode\n# Save timing comparison\nif (!dir.exists(\"models\")) dir.create(\"models\")\ntiming_comparison &lt;- tibble::tibble(\n  Method = c(\"LIME (100 observations)\", \"SHAP (1 observation)\"),\n  Seconds = c(time_lime$toc - time_lime$tic, time_shap$toc - time_shap$tic),\n  Observations = c(100, 1),\n  TimePerObservation = c((time_lime$toc - time_lime$tic) / 100, time_shap$toc - time_shap$tic)\n)\nsaveRDS(timing_comparison, \"models/timing_comparison.rds\")\n\n\n\n\nCode\nif (!dir.exists(\"models\")) dir.create(\"models\")\n\nsaveRDS(rf_model, \"models/rf_model.rds\")\nsaveRDS(nnet_model, \"models/nnet_model.rds\")\nsaveRDS(rf_importance_df, \"models/rf_importance_df.rds\")\nsaveRDS(nn_importance_df, \"models/nn_importance_df.rds\")\nsaveRDS(balanced_train_data, \"models/balanced_train_data.rds\")\nsaveRDS(balanced_train_nn, \"models/balanced_train_nn.rds\")\nsaveRDS(test_data, \"models/test_data.rds\")\nsaveRDS(test_nn, \"models/test_nn.rds\")\nsaveRDS(predictor_cols, \"models/predictor_cols.rds\")\nsaveRDS(top_features, \"models/top_features.rds\")\nsaveRDS(lime_explanation, \"models/lime_explanation.rds\")\nsaveRDS(lime_explanation_nn, \"models/lime_explanation_nn.rds\")\nsaveRDS(shap_values, \"models/shap_values.rds\")\nsaveRDS(shapley_rf, \"models/shapley_rf.rds\")",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "methods.html#summary",
+    "href": "methods.html#summary",
+    "title": "3  Methodology",
+    "section": "4.7 Summary",
+    "text": "4.7 Summary\nThis chapter has:\n\nImplemented two distinct machine learning models for income prediction:\n\nRandom Forest as a traditional ensemble method\nNeural Network as a more complex “black box” approach\n\nApplied two leading interpretation methods:\n\nLIME for local, approximation-based explanations\nSHAP for game-theory-based feature attribution",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Methodology</span>"
+    ]
+  },
+  {
+    "objectID": "results.html",
+    "href": "results.html",
+    "title": "4  Results and Analysis",
+    "section": "",
+    "text": "5 4. Results and Analysis",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "results.html#model-performance-evaluation",
+    "href": "results.html#model-performance-evaluation",
+    "title": "4  Results and Analysis",
+    "section": "5.1 4.1 Model Performance Evaluation",
+    "text": "5.1 4.1 Model Performance Evaluation\n\n5.1.1 Confusion Matrices and Accuracy\n\n\nCode\nprint(rf_cm)\n\n\nConfusion Matrix and Statistics\n\n          Reference\nPrediction  low high\n      low  5134  253\n      high 2282 2099\n                                          \n               Accuracy : 0.7405          \n                 95% CI : (0.7317, 0.7492)\n    No Information Rate : 0.7592          \n    P-Value [Acc &gt; NIR] : 1               \n                                          \n                  Kappa : 0.4517          \n                                          \n Mcnemar's Test P-Value : &lt;2e-16          \n                                          \n            Sensitivity : 0.6923          \n            Specificity : 0.8924          \n         Pos Pred Value : 0.9530          \n         Neg Pred Value : 0.4791          \n             Prevalence : 0.7592          \n         Detection Rate : 0.5256          \n   Detection Prevalence : 0.5515          \n      Balanced Accuracy : 0.7924          \n                                          \n       'Positive' Class : low             \n                                          \n\n\nCode\nprint(nnet_cm)\n\n\nConfusion Matrix and Statistics\n\n          Reference\nPrediction  low high\n      low  5322  217\n      high 2094 2135\n                                          \n               Accuracy : 0.7634          \n                 95% CI : (0.7549, 0.7718)\n    No Information Rate : 0.7592          \n    P-Value [Acc &gt; NIR] : 0.169           \n                                          \n                  Kappa : 0.4915          \n                                          \n Mcnemar's Test P-Value : &lt;2e-16          \n                                          \n            Sensitivity : 0.7176          \n            Specificity : 0.9077          \n         Pos Pred Value : 0.9608          \n         Neg Pred Value : 0.5048          \n             Prevalence : 0.7592          \n         Detection Rate : 0.5448          \n   Detection Prevalence : 0.5671          \n      Balanced Accuracy : 0.8127          \n                                          \n       'Positive' Class : low             \n                                          \n\n\n\n\n5.1.2 ROC Curves and AUC Comparison\n\n\nCode\nplot(rf_roc, main = \"ROC Curves\", col = \"blue\", lwd = 2)\nlines(nnet_roc, col = \"red\", lwd = 2)\nlegend(\"bottomright\", legend = c(paste(\"RF AUC =\", round(rf_auc, 3)),\n                                  paste(\"NN AUC =\", round(nnet_auc, 3))),\n       col = c(\"blue\", \"red\"), lwd = 2)\n\n\n\n\n\n\n\n\n\n\n\n5.1.3 Confidence Distribution (Optional)\nYou can optionally add:\n\n\nCode\n# Histograms of predicted probabilities\nhist(rf_probs[,\"high\"], main = \"RF: Predicted Probabilities for &gt;50K\", xlab = \"Probability\", col = \"skyblue\")\n\n\n\n\n\n\n\n\n\nCode\nhist(nnet_probabilities, main = \"NN: Predicted Probabilities for &gt;50K\", xlab = \"Probability\", col = \"salmon\")",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "results.html#explanation-method-comparison",
+    "href": "results.html#explanation-method-comparison",
+    "title": "4  Results and Analysis",
+    "section": "5.2 4.2 Explanation Method Comparison",
+    "text": "5.2 4.2 Explanation Method Comparison\n\n5.2.1 Feature Importance Visualization\n\n\nCode\nlibrary(ggplot2)\n\n# Random Forest importance plots\np1 &lt;- ggplot(head(rf_importance_df, 10), aes(x = reorder(Feature, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +\n  geom_col(fill = \"steelblue\") +\n  coord_flip() +\n  labs(title = \"RF: Top 10 Features by Accuracy Importance\") +\n  theme_minimal()\n\np2 &lt;- ggplot(head(rf_importance_df, 10), aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +\n  geom_col(fill = \"darkgreen\") +\n  coord_flip() +\n  labs(title = \"RF: Top 10 Features by Gini Importance\") +\n  theme_minimal()\n\nprint(p1)\n\n\n\n\n\n\n\n\n\nCode\nprint(p2)\n\n\n\n\n\n\n\n\n\n\n\nCode\nlibrary(ggplot2)\n# NN importance plot\nnn_importance_df &lt;- nn_importance_df[order(nn_importance_df$Importance, decreasing = TRUE), ]\nggplot(head(nn_importance_df, 10), aes(x = reorder(Feature, Importance), y = Importance)) +\n  geom_col(fill = \"darkred\") +\n  coord_flip() +\n  labs(title = \"NN: Top 10 Features by Absolute Weight\", y = \"Sum of Absolute Weights\") +\n  theme_minimal()\n\n\n\n\n\n\n\n\n\n\n\n5.2.2 Feature Ranking Consistency\n\n\nCode\nrf_top10 &lt;- head(rf_importance_df$Feature, 10)\nnn_top10 &lt;- head(nn_importance_df$Feature, 10)\nintersection &lt;- intersect(rf_top10, nn_top10)\ncat(\"Common top features:\", paste(intersection, collapse = \", \"), \"\\n\")\n\n\nCommon top features: capital_gain, marital_statusMarried.civ.spouse, education_num, age, hours_per_week, relationshipOwn.child, relationshipNot.in.family, sexMale",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "results.html#local-explanations-lime",
+    "href": "results.html#local-explanations-lime",
+    "title": "4  Results and Analysis",
+    "section": "5.3 4.3 Local Explanations: LIME",
+    "text": "5.3 4.3 Local Explanations: LIME\n\n5.3.1 LIME Visualizations for Random Forest and NN\n\n\nCode\nlibrary(lime)\n\n\nWarning: package 'lime' was built under R version 4.4.3\n\n\nCode\ncases_rf &lt;- unique(lime_explanation$case)[1:3]\ncases_nn &lt;- unique(lime_explanation_nn$case)[1:3]\n\np_rf &lt;- plot_features(\n  lime_explanation[lime_explanation$case %in% cases_rf, ],\n  ncol = 1\n) + theme(\n  text = element_text(size = 14),\n  axis.text.y = element_text(size = 12)\n)\n\np_nn &lt;- plot_features(\n  lime_explanation_nn[lime_explanation_nn$case %in% cases_nn, ],\n  ncol = 1\n) + theme(\n  text = element_text(size = 14),\n  axis.text.y = element_text(size = 12)\n)\n\np_rf\n\n\n\n\n\n\n\n\n\nCode\np_nn",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "results.html#shap-summary-and-interactions",
+    "href": "results.html#shap-summary-and-interactions",
+    "title": "4  Results and Analysis",
+    "section": "5.4 4.5 SHAP: Summary and Interactions",
+    "text": "5.4 4.5 SHAP: Summary and Interactions\n\n5.4.1 SHAP Summary Values (1 Test Point)\n\n\nCode\nplot(shapley_rf)\n\n\n\n\n\n\n\n\n\n\n\n5.4.2 SHAP Value Ranking\n\n\nCode\nlibrary(tidyverse)\n\n\nWarning: package 'tidyverse' was built under R version 4.4.3\n\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ lubridate 1.9.4     ✔ tibble    3.2.1\n✔ purrr     1.0.2     ✔ tidyr     1.3.1\n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::combine()       masks randomForest::combine()\n✖ dplyr::explain()       masks lime::explain()\n✖ dplyr::filter()        masks stats::filter()\n✖ dplyr::lag()           masks stats::lag()\n✖ purrr::lift()          masks caret::lift()\n✖ randomForest::margin() masks ggplot2::margin()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\n\nCode\nshap_top &lt;- shap_values %&gt;%\n  dplyr::mutate(phi_abs = abs(phi)) %&gt;%\n  dplyr::arrange(desc(phi_abs)) %&gt;%\n  head(15)\n\nggplot(shap_top, aes(x = reorder(feature.value, phi), y = phi)) +\n  geom_col(fill = \"gray40\") +\n  coord_flip() +\n  labs(title = \"Top SHAP Values\", x = \"Feature\", y = \"SHAP Value (phi)\") +\n  theme_minimal()",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "results.html#computational-efficiency",
+    "href": "results.html#computational-efficiency",
+    "title": "4  Results and Analysis",
+    "section": "5.5 4.6 Computational Efficiency",
+    "text": "5.5 4.6 Computational Efficiency\n\n\nCode\nprint(timing_comparison)\n\n\n# A tibble: 2 × 4\n  Method                  Seconds Observations TimePerObservation\n  &lt;chr&gt;                     &lt;dbl&gt;        &lt;dbl&gt;              &lt;dbl&gt;\n1 LIME (100 observations)   13.8           100              0.138\n2 SHAP (1 observation)       4.53            1              4.53",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "results.html#summary",
+    "href": "results.html#summary",
+    "title": "4  Results and Analysis",
+    "section": "5.6 Summary",
+    "text": "5.6 Summary\nThis section presented: - Performance of both models (RF and NN) - Explanation results from LIME and SHAP - Visualization of top features - Consistency and stability analysis - Timing comparison\nThe next step is to interpret these findings in the context of model transparency and explainability trade-offs.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Results and Analysis</span>"
+    ]
+  },
+  {
+    "objectID": "visualization.html",
+    "href": "visualization.html",
+    "title": "5  Enhanced Visualizations",
+    "section": "",
+    "text": "6 Enhanced Visualizations for Interpretability\nThis chapter adds visually rich and engaging plots to help communicate model behavior and interpretability insights.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Enhanced Visualizations</span>"
+    ]
+  },
+  {
+    "objectID": "visualization.html#correlation-heatmap",
+    "href": "visualization.html#correlation-heatmap",
+    "title": "5  Enhanced Visualizations",
+    "section": "6.1 1. Correlation Heatmap",
+    "text": "6.1 1. Correlation Heatmap\nVisualizing correlations between numeric features in the dataset.\n\n\nCode\nlibrary(corrplot)\n\n\nWarning: package 'corrplot' was built under R version 4.4.3\n\n\ncorrplot 0.95 loaded\n\n\nCode\nlibrary(dplyr)\n\n\n\nAttaching package: 'dplyr'\n\n\nThe following objects are masked from 'package:stats':\n\n    filter, lag\n\n\nThe following objects are masked from 'package:base':\n\n    intersect, setdiff, setequal, union\n\n\nCode\ntrain_data &lt;- read.csv(\"data/adult_train.csv\")\ntest_data &lt;- read.csv(\"data/adult_test.csv\")\nrf_importance_df &lt;- readRDS(\"models/rf_importance_df.rds\")\n\ntop_vars &lt;- rf_importance_df$Feature[1:5]\n\nselected_data &lt;- train_data[, top_vars]\n\nselected_data &lt;- selected_data %&gt;% select(where(is.numeric))\n\ncor_matrix &lt;- cor(selected_data, use = \"complete.obs\")\n\ncorrplot(\n  cor_matrix, method = \"color\", type = \"upper\",\n  tl.col = \"black\", addCoef.col = \"black\",\n  number.cex = 0.8, title = \"Correlation Heatmap of Top Variables\",\n  mar = c(0, 0, 2, 0)\n)",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Enhanced Visualizations</span>"
+    ]
+  },
+  {
+    "objectID": "visualization.html#parallel-coordinate-plot-of-important-features",
+    "href": "visualization.html#parallel-coordinate-plot-of-important-features",
+    "title": "5  Enhanced Visualizations",
+    "section": "6.2 2. Parallel Coordinate Plot of Important Features",
+    "text": "6.2 2. Parallel Coordinate Plot of Important Features\n\n\nCode\nlibrary(GGally)\ntop_rf_features &lt;- rf_importance_df$Feature[1:6]  # top 6 for visibility\n\nparallel_df &lt;- train_data[, c(top_rf_features, \"income\")]\n\nGGally::ggparcoord(data = parallel_df,\n                   columns = 1:6,\n                   groupColumn = 7,\n                   scale = \"std\",\n                   showPoints = TRUE,\n                   alphaLines = 0.3) +\n  theme_minimal() +\n  labs(title = \"Parallel Coordinate Plot of Top RF Features\")",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Enhanced Visualizations</span>"
+    ]
+  },
+  {
+    "objectID": "visualization.html#dimensionality-reduction-umap",
+    "href": "visualization.html#dimensionality-reduction-umap",
+    "title": "5  Enhanced Visualizations",
+    "section": "6.3 3. Dimensionality Reduction (UMAP)",
+    "text": "6.3 3. Dimensionality Reduction (UMAP)\n\n\nCode\nlibrary(umap)\nlibrary(RColorBrewer)\n\numap_model &lt;- umap::umap(select(train_data, -income))\numap_df &lt;- as.data.frame(umap_model$layout)\numap_df$income &lt;- train_data$income\n\n# Plot\nggplot(umap_df, aes(x = V1, y = V2, color = income)) +\n  geom_point(alpha = 0.6) +\n  scale_color_brewer(palette = \"Set1\") +\n  labs(title = \"UMAP Projection of Training Data\", x = \"UMAP1\", y = \"UMAP2\") +\n  theme_minimal()\n\n\n\n\n\n\n\n\n\n\nThese visualizations provide interactive and exploratory perspectives that can complement formal interpretability metrics. They are especially useful when presenting to non-technical audiences or during exploratory analysis.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Enhanced Visualizations</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html",
+    "href": "discussion.html",
+    "title": "6  Discussion",
+    "section": "",
+    "text": "7 5 Discussion and Deeper Insights",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#what-the-experiments-actually-showed",
+    "href": "discussion.html#what-the-experiments-actually-showed",
+    "title": "6  Discussion",
+    "section": "7.1 5.1 What the Experiments Actually Showed",
+    "text": "7.1 5.1 What the Experiments Actually Showed\n\n\n\n\n\n\n\n\n\n\nModel\nAccuracy\nAUC\nBalanced Accuracy\nWhere It Shines\n\n\n\n\nRandom Forest\n0.74\n0.884\n0.79\nBuilt‑in feature importance, quick to train, naturally robust to class imbalance\n\n\nNeural Network (1‑hidden‑layer MLP)\n0.76\n0.899\n0.81\nFlexible with non‑linear patterns, easy to scale deeper if needed\n\n\n\nSmall caveat: the MLP wins on AUC by a hair, but confusion‑matrix results tell us that neither model dominates across every metric. In short, throwing a deeper network at this tabular problem does not magically beat well‑tuned trees.",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#lime-vs.-shap-theory-meets-reality",
+    "href": "discussion.html#lime-vs.-shap-theory-meets-reality",
+    "title": "6  Discussion",
+    "section": "7.2 5.2 LIME vs. SHAP — Theory Meets Reality",
+    "text": "7.2 5.2 LIME vs. SHAP — Theory Meets Reality\n\n\n\n\n\n\n\n\n Dimension \nLIME\nSHAP\n\n\n\n\nCore Idea\nPerturb the neighbourhood of one sample, fit a tiny linear model to mimic the big model locally\nShapley game‑theory decomposition: prediction = baseline + fair share from each feature\n\n\nLocal / Global\nPurely local (one explanation ≈ one sample)\nLocal and global (aggregate Shapley values)\n\n\nCompute Cost\nO( #perturbations × #features ); high‑dimensional data ↗ runtime\nTheoretical O(2^k), but tree‑/kernel shortcuts make single‑point SHAP run in seconds\n\n\nWhere Stability Comes From\nCareful choice of neighbourhood size, sampling distribution, regularisation\nShapley axioms (consistency, local accuracy) guarantee a unique solution\n\n\nSweet Spots\n1) Intuitive bar charts  2) Works with any black box  3) User can tweak sampling\n1) Strong theory  2) Additive outputs = easy to sum, average, sort  3) Tree SHAP near‑linear time on forests\n\n\nGotchas\nSensitive to parameters; stability drops in very wide feature spaces\nDeep / kernel SHAP on heavy networks is still pricey; outliers can stretch Shapley values",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#does-model-complexity-change-the-story",
+    "href": "discussion.html#does-model-complexity-change-the-story",
+    "title": "6  Discussion",
+    "section": "7.3 5.3 Does Model Complexity Change the Story?",
+    "text": "7.3 5.3 Does Model Complexity Change the Story?\n\n7.3.1 Simple models – shallow NNs, forests\n\nTransparency is already decent (think Gini, raw weights).\nLIME and SHAP mostly agree on the top handful of features (≈ 60 % overlap here).\nEasy to explain to a product manager or policy analyst – nothing too exotic.\n\n\n\n7.3.2 Complex stacks – deep nets, boosted ensembles\n\nLots of gradient pathways and feature interactions; a single method rarely captures every nuance.\nKernel or Deep SHAP still works, but memory/time spikes; LIME needs far more permutations and a good distance metric.\nRedundant features blow up the search space. Shapley’s additive fairness helps; LIME may wobble under multicollinearity.\n\nTake‑away: the more tangled your model, the more you lean on SHAP for a principled global view. LIME remains the lightweight microscope when you only care about a handful of critical decisions.",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#reading-the-extra-plots",
+    "href": "discussion.html#reading-the-extra-plots",
+    "title": "6  Discussion",
+    "section": "7.4 5.4 Reading the Extra Plots",
+    "text": "7.4 5.4 Reading the Extra Plots\n\nCorrelation heatmap – Key numeric features barely correlate with each other, so the model isn’t just riding a single linear signal; non‑linear effects matter.\nParallel‑coords – capital_gain shows a step‑function split: high earners bunch at discrete gain levels, while fnlwgt only flags income at the extremes.\nUMAP 2‑D embedding – Red and blue points overlap heavily; even perfect feature engineering would struggle to push AUC beyond ~0.9 on this dataset.",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#which-tool-when",
+    "href": "discussion.html#which-tool-when",
+    "title": "6  Discussion",
+    "section": "7.5 5.5 Which Tool When?",
+    "text": "7.5 5.5 Which Tool When?\n\n\n\n\n\n\n\n\nReal‑world Need\nPick This\nWhy\n\n\n\n\nReal‑time decision service\nTree / Deep SHAP\nMillisecond latency per case, additive explanation satisfies auditors\n\n\nOffline batch audit or debugging\nLIME + intrinsic importance\nQuickly surfaces weird edge cases and local boundaries; cross‑checks with RF importance\n\n\nYou care about feature interactions or “what‑if” tweaks\nSHAP interaction, counterfactuals\nQuantifies synergy terms, shows how to flip a decision\n\n\nImages, text, other unstructured inputs\nDeep SHAP / Integrated Gradients\nLIME super‑pixels need heavy tuning; gradient‑based SHAP more stable",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#limitations-what-wed-do-next",
+    "href": "discussion.html#limitations-what-wed-do-next",
+    "title": "6  Discussion",
+    "section": "7.6 5.6 Limitations & What We’d Do Next",
+    "text": "7.6 5.6 Limitations & What We’d Do Next\n\nCorrelation ≠ causation. Both methods are descriptive, not causal. Next step: marry SHAP with DoWhy or causal SHAP.\nUncertainty. We checked LIME stability but didn’t build CIs for Shapley values. Bootstrap‑SHAP could change that.\nVisual analytics. Embedding these explanations into a Shiny / Dash dashboard would let domain experts poke around without code.",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
+  },
+  {
+    "objectID": "discussion.html#final-thoughts",
+    "href": "discussion.html#final-thoughts",
+    "title": "6  Discussion",
+    "section": "7.7 5.7 Final Thoughts",
+    "text": "7.7 5.7 Final Thoughts\nRelying on a single interpretability metric is a trap. The blend of SHAP’s global fairness and LIME’s local storytelling covers most practical needs:\n\nRegulators trust SHAP’s additive, consistent attributions.\nEngineers and analysts appreciate LIME’s quick, tweakable local views for debugging.\n\nMix them – plus interactive visuals – and you’re well on your way to genuinely transparent, trustworthy machine‑learning systems.",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Discussion</span>"
+    ]
   }
 ]
